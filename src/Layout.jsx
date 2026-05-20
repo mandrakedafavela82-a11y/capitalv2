@@ -4,7 +4,7 @@ import { useAuth } from './contexts/AuthContext'
 import { useTheme } from './contexts/ThemeContext'
 import { supabase } from './lib/supabase'
 import {
-  LayoutDashboard, Users, List, TrendingUp, Award,
+  LayoutDashboard, Users, TrendingUp, Award,
   Kanban, Target, MessageSquare, Settings, LogOut,
   Sun, Moon, Coffee, Menu, Trophy, Flag,
   UserCog, BarChart2, DollarSign,
@@ -13,7 +13,6 @@ import {
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard',    icon: LayoutDashboard, roles: ['admin','consultor','operacional'] },
   { path: '/clientes',  label: 'Clientes',     icon: Users,           roles: ['admin','consultor'] },
-  { path: '/listas',    label: 'Listas',       icon: List,            roles: ['admin','consultor'] },
   { path: '/vendas',    label: 'Vendas',       icon: TrendingUp,      roles: ['admin','consultor'] },
   { path: '/comissoes', label: 'Comissões',    icon: Award,           roles: ['admin','consultor'] },
   { path: '/metas',     label: 'Metas',        icon: Flag,            roles: ['admin','consultor'] },

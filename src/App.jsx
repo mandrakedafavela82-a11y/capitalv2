@@ -6,7 +6,6 @@ import Layout from './Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Clients from './pages/Clients'
-import Lists from './pages/Lists'
 import Sales from './pages/Sales'
 import Commissions from './pages/Commissions'
 import Ranking from './pages/Ranking'
@@ -49,7 +48,6 @@ function AppRoutes() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard"  element={<Dashboard />} />
         <Route path="clientes"   element={<Guard roles={['admin','consultor']}><Clients /></Guard>} />
-        <Route path="listas"     element={<Guard roles={['admin','consultor']}><Lists /></Guard>} />
         <Route path="vendas"     element={<Guard roles={['admin','consultor']}><Sales /></Guard>} />
         <Route path="comissoes"  element={<Guard roles={['admin','consultor']}><Commissions /></Guard>} />
         <Route path="ranking"    element={<Guard roles={['admin','consultor']}><Ranking /></Guard>} />
