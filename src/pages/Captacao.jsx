@@ -5,7 +5,7 @@ import { fmtDate, todayStr } from '../lib/utils'
 import { toast } from 'sonner'
 import { Plus, Trash2, ChevronDown, ChevronUp, BarChart2, Send, Upload } from 'lucide-react'
 
-const EMPTY_LIST = { nome: '', banco: 'Caixa', data: todayStr() }
+const EMPTY_LIST = { nome: '', descricao: '', banco: 'Caixa', data: todayStr() }
 
 const LEAD_STATUS = {
   contacted:      { label: 'Contatado',     bg: '#3b82f633', color: '#3b82f6' },
@@ -116,7 +116,13 @@ export default function Captacao() {
   }
 
   async function save() {
-    const payload = { ...form, consultor_id: profile?.id }
+    const payload = {
+      nome: form.nome,
+      descricao: form.descricao || null,
+      banco: form.banco || 'Caixa',
+      data: form.data || todayStr(),
+      consultor_id: profile?.id,
+    }
     const { data: lista, error } = await supabase.from('listas').insert(payload).select().single()
     if (error) return toast.error('Erro ao criar lista')
 
@@ -152,6 +158,9 @@ export default function Captacao() {
   function closeModal() {
     setModal(false); setForm(EMPTY_LIST); setNomes(''); setParsedLeads([]); setCsvMode(false); setAssignedTo([])
   }
+
+  // For admins, banco defaults to 'Caixa' (not shown in modal)
+
 
   async function remove(id) {
     if (!confirm('Excluir lista e todos os leads?')) return
@@ -434,28 +443,86 @@ export default function Captacao() {
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
-            <h2>Nova Lista</h2>
+            <h2>{isAdmin ? 'Nova Lista de Captação' : 'Nova Lista'}</h2>
+
             <div className="modal-row">
-              <label>Nome da Lista *</label>
-              <input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} placeholder="Ex: Lista Caixa Maio" />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div className="modal-row">
-                <label>Banco</label>
-                <select value={form.banco} onChange={e => setForm(p => ({ ...p, banco: e.target.value }))}>
-                  <option>Caixa</option><option>Santander</option>
-                </select>
-              </div>
-              <div className="modal-row">
-                <label>Data</label>
-                <input type="date" value={form.data} onChange={e => setForm(p => ({ ...p, data: e.target.value }))} />
-              </div>
+              <label>Título *</label>
+              <input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))}
+                placeholder="Ex: Lista Setembro 2026" />
             </div>
 
+            <div className="modal-row">
+              <label>Descrição</label>
+              <input value={form.descricao} onChange={e => setForm(p => ({ ...p, descricao: e.target.value }))}
+                placeholder="Opcional" />
+            </div>
+
+            {!isAdmin && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="modal-row">
+                  <label>Banco</label>
+                  <select value={form.banco} onChange={e => setForm(p => ({ ...p, banco: e.target.value }))}>
+                    <option>Caixa</option><option>Santander</option>
+                  </select>
+                </div>
+                <div className="modal-row">
+                  <label>Data</label>
+                  <input type="date" value={form.data} onChange={e => setForm(p => ({ ...p, data: e.target.value }))} />
+                </div>
+              </div>
+            )}
+
+            {/* CSV upload */}
+            <div className="modal-row">
+              <label>
+                Arquivo CSV {isAdmin ? '*' : '(opcional)'}
+                <span style={{ fontWeight: 400, textTransform: 'none', color: 'var(--muted)', marginLeft: 6 }}>
+                  O CSV deve ter colunas: <strong>nome, cpf, telefone</strong>
+                </span>
+              </label>
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '16px', border: '2px dashed var(--border)', borderRadius: 10,
+                cursor: 'pointer', color: 'var(--muted)', transition: 'border-color .15s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+              >
+                <Upload size={16} />
+                <span style={{ fontSize: 13 }}>
+                  {parsedLeads.length > 0 ? `${parsedLeads.length} leads carregados ✅` : 'Clique para selecionar o CSV'}
+                </span>
+                <input type="file" accept=".csv,.txt" style={{ display: 'none' }} onChange={handleCSV} />
+              </label>
+              {parsedLeads.length > 0 && (
+                <div style={{ fontSize: 12, color: 'var(--success)', marginTop: 4 }}>
+                  {parsedLeads.length} leads
+                  {parsedLeads.some(l => l.cpf) && ' · com CPF'}
+                  {parsedLeads.some(l => l.telefone) && ' · com telefone'}
+                </div>
+              )}
+            </div>
+
+            {/* Text fallback for non-admin */}
+            {!isAdmin && !parsedLeads.length && (
+              <div className="modal-row">
+                <label>Ou cole os nomes (um por linha)</label>
+                <textarea rows={5} value={nomes} onChange={e => setNomes(e.target.value)}
+                  placeholder={"João da Silva\nMaria Souza\nPedro Lima\n..."}
+                  style={{ resize: 'vertical', fontFamily: 'monospace', fontSize: 13 }} />
+              </div>
+            )}
+
+            {/* Vendor assignment (admin only) */}
             {isAdmin && users.length > 0 && (
               <div className="modal-row">
-                <label>Atribuir a Vendedores</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 140, overflowY: 'auto', padding: '8px 10px', background: 'var(--hover)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                <label>
+                  Atribuir a Vendedores <span style={{ fontWeight: 400, textTransform: 'none' }}>(opcional)</span>
+                </label>
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 6 }}>
+                  Se não selecionar, todos os vendedores terão acesso
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 160, overflowY: 'auto', padding: '8px 10px', background: 'var(--hover)', borderRadius: 10, border: '1px solid var(--border)' }}>
                   {users.map(u => (
                     <label key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
                       <input type="checkbox" checked={assignedTo.includes(u.id)} onChange={() => toggleAssign(u.id)}
@@ -464,50 +531,6 @@ export default function Captacao() {
                     </label>
                   ))}
                 </div>
-                {assignedTo.length === 0 && (
-                  <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>Nenhum selecionado → leads ficam com você</div>
-                )}
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-              <button type="button" onClick={() => setCsvMode(false)} className="btn btn-sm"
-                style={{ background: !csvMode ? 'var(--accent)' : 'var(--hover)', color: !csvMode ? '#fff' : 'var(--text)', border: '1px solid var(--border)' }}>
-                Colar Nomes
-              </button>
-              <button type="button" onClick={() => setCsvMode(true)} className="btn btn-sm"
-                style={{ background: csvMode ? 'var(--accent)' : 'var(--hover)', color: csvMode ? '#fff' : 'var(--text)', border: '1px solid var(--border)' }}>
-                <Upload size={13} /> Importar CSV
-              </button>
-            </div>
-
-            {csvMode ? (
-              <div className="modal-row">
-                <label>CSV (colunas: nome, cpf, telefone)</label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px', border: '2px dashed var(--border)', borderRadius: 10, cursor: 'pointer', color: 'var(--muted)' }}>
-                  <Upload size={16} />
-                  <span style={{ fontSize: 13 }}>{parsedLeads.length > 0 ? `${parsedLeads.length} leads carregados` : 'Clique para selecionar o CSV'}</span>
-                  <input type="file" accept=".csv,.txt" style={{ display: 'none' }} onChange={handleCSV} />
-                </label>
-                {parsedLeads.length > 0 && (
-                  <div style={{ fontSize: 12, color: 'var(--success)', marginTop: 6 }}>
-                    ✅ {parsedLeads.length} leads
-                    {parsedLeads.some(l => l.cpf) && ' · com CPF'}
-                    {parsedLeads.some(l => l.telefone) && ' · com telefone'}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="modal-row">
-                <label>Leads (um nome por linha)</label>
-                <textarea rows={7} value={nomes} onChange={e => setNomes(e.target.value)}
-                  placeholder={"João da Silva\nMaria Souza\nPedro Lima\n..."}
-                  style={{ resize: 'vertical', fontFamily: 'monospace', fontSize: 13 }} />
-                {nomes && (
-                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
-                    {nomes.split('\n').filter(n => n.trim()).length} lead(s)
-                  </div>
-                )}
               </div>
             )}
 

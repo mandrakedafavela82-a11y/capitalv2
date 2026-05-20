@@ -406,6 +406,9 @@ create policy "listas: operacional lê todas"
 -- Execute no SQL Editor mesmo se já tiver rodado as versões anteriores
 -- ============================================================
 
+-- ── Nova coluna em listas ─────────────────────────────────────
+alter table public.listas add column if not exists descricao text;
+
 -- ── Novas colunas em clientes ─────────────────────────────────
 alter table public.clientes add column if not exists telefone      text;
 alter table public.clientes add column if not exists email         text;
