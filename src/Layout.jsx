@@ -215,7 +215,7 @@ export default function Layout() {
           />
         </header>
 
-        <main style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+        <main style={{ flex: 1, padding: isOnChat ? '16px' : '24px', overflowY: isOnChat ? 'hidden' : 'auto', display: 'flex', flexDirection: 'column' }}>
           <Outlet />
         </main>
       </div>
