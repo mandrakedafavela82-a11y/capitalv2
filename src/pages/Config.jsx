@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { compressImage } from '../lib/utils'
 import { toast } from 'sonner'
-import { Save, Upload, Moon, Sun, Coffee } from 'lucide-react'
+import { Save, Upload, Moon, Sun, Coffee, Wifi, WifiOff, RefreshCw } from 'lucide-react'
 
 export default function Config() {
   const { profile, refreshProfile } = useAuth()
@@ -12,7 +12,20 @@ export default function Config() {
   const [nome, setNome] = useState(profile?.nome || '')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [connStatus, setConnStatus] = useState('checking')
   const fileRef = useRef(null)
+
+  useEffect(() => { checkConn() }, [])
+
+  async function checkConn() {
+    setConnStatus('checking')
+    try {
+      const { error } = await supabase.from('profiles').select('id').limit(1)
+      setConnStatus(error ? 'error' : 'ok')
+    } catch {
+      setConnStatus('error')
+    }
+  }
 
   const themes = [
     { key: 'dark',  label: 'Escuro', icon: Moon,   desc: 'Fundo preto, texto claro' },
@@ -27,7 +40,7 @@ export default function Config() {
       .from('profiles')
       .update({ nome: nome.trim(), avatar: nome.trim().slice(0, 1).toUpperCase() })
       .eq('id', profile?.id)
-    if (error) { toast.error('Erro ao salvar'); setSaving(false); return }
+    if (error) { toast.error('Erro ao salvar: ' + error.message); setSaving(false); return }
     await refreshProfile()
     toast.success('Nome salvo')
     setSaving(false)
@@ -130,6 +143,31 @@ export default function Config() {
             <div style={{ fontSize: 14, wordBreak: 'break-all' }}>{profile?.email}</div>
             <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8, marginBottom: 4 }}>Cargo</div>
             <div style={{ fontSize: 14, textTransform: 'capitalize' }}>{profile?.role}</div>
+          </div>
+        </div>
+
+        {/* Connection status */}
+        <div className="card">
+          <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700 }}>Banco de Dados</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 10, background: 'var(--hover)', border: '1px solid var(--border)' }}>
+            {connStatus === 'checking'
+              ? <RefreshCw size={20} color="var(--muted)" style={{ animation: 'spin 1s linear infinite' }} />
+              : connStatus === 'ok'
+              ? <Wifi size={20} color="var(--success)" />
+              : <WifiOff size={20} color="var(--danger)" />}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: connStatus === 'ok' ? 'var(--success)' : connStatus === 'error' ? 'var(--danger)' : 'var(--muted)' }}>
+                {connStatus === 'checking' ? 'Verificando...' : connStatus === 'ok' ? 'Conectado ao Supabase' : 'Sem conexão com o banco'}
+              </div>
+              {connStatus === 'error' && (
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                  O projeto pode estar pausado. Acesse app.supabase.com e clique em "Restore project".
+                </div>
+              )}
+            </div>
+            <button onClick={checkConn} className="btn btn-secondary btn-sm btn-icon" title="Verificar novamente">
+              <RefreshCw size={13} />
+            </button>
           </div>
         </div>
 
