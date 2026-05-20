@@ -150,9 +150,7 @@ create policy "approved_emails: admin tudo"
 -- Usuário autenticado pode verificar se o próprio e-mail está aprovado
 create policy "approved_emails: verificar próprio"
   on public.approved_emails for select
-  using (
-    email = (select email from auth.users where id = auth.uid())
-  );
+  using (email = auth.email());
 
 -- ── clientes ────────────────────────────────────────────────
 drop policy if exists "clientes: admin vê tudo"          on public.clientes;
