@@ -131,7 +131,17 @@ create policy "profiles: leitura para autenticados"
 
 create policy "profiles: editar próprio"
   on public.profiles for update
-  using (id = auth.uid());
+  using (id = auth.uid())
+  with check (
+    id = auth.uid()
+    and role = (select role from public.profiles p2 where p2.id = auth.uid())
+  );
+
+-- Admin pode alterar qualquer perfil (inclusive role)
+drop policy if exists "profiles: admin atualiza tudo" on public.profiles;
+create policy "profiles: admin atualiza tudo"
+  on public.profiles for update
+  using (public.is_admin());
 
 create policy "profiles: insert via trigger"
   on public.profiles for insert
@@ -171,7 +181,12 @@ create policy "clientes: consultor vê os seus"
 
 create policy "clientes: inserir"
   on public.clientes for insert
-  with check (auth.role() = 'authenticated');
+  with check (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role in ('admin', 'consultor')
+    )
+  );
 
 create policy "clientes: admin atualiza tudo"
   on public.clientes for update
@@ -212,7 +227,7 @@ create policy "mensagens: leitura"
 
 create policy "mensagens: inserir"
   on public.mensagens for insert
-  with check (auth.role() = 'authenticated');
+  with check (auth.role() = 'authenticated' and user_id = auth.uid());
 
 -- ── comissoes ───────────────────────────────────────────────
 drop policy if exists "comissoes: admin tudo"          on public.comissoes;
