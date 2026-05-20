@@ -66,10 +66,10 @@ function SidebarContent({ onClose }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Logo */}
-      <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', minHeight: 64, display: 'flex', alignItems: 'center' }}>
+      <div style={{ padding: '18px 16px', borderBottom: '1px solid var(--border)', minHeight: 68, display: 'flex', alignItems: 'center', background: 'linear-gradient(180deg, rgba(201,162,42,.06) 0%, transparent 100%)' }}>
         <img
           src={logoSrc} alt="CapitalCred"
-          style={{ height: 38, objectFit: 'contain', maxWidth: '100%' }}
+          style={{ height: 40, objectFit: 'contain', maxWidth: '100%' }}
           onError={e => { e.target.style.display = 'none' }}
         />
       </div>
@@ -83,12 +83,14 @@ function SidebarContent({ onClose }) {
             onClick={onClose}
             style={({ isActive }) => ({
               display: 'flex', alignItems: 'center', gap: 10,
-              padding: '9px 16px',
+              padding: '9px 12px 9px 13px',
+              margin: '1px 8px',
+              borderRadius: 10,
               color: isActive ? 'var(--accent)' : 'var(--text)',
-              background: isActive ? 'var(--hover)' : 'transparent',
-              textDecoration: 'none', fontSize: 14,
-              fontWeight: isActive ? 600 : 400,
-              borderLeft: `3px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
+              background: isActive ? 'rgba(201,162,42,.1)' : 'transparent',
+              textDecoration: 'none', fontSize: 13.5,
+              fontWeight: isActive ? 700 : 400,
+              border: `1px solid ${isActive ? 'rgba(201,162,42,.2)' : 'transparent'}`,
               transition: 'all .15s',
             })}
           >
