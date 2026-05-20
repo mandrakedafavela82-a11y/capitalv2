@@ -59,72 +59,76 @@ export default function Dashboard() {
   useEffect(() => { load() }, [profile, dashView])
 
   async function load() {
+    if (!profile?.id) return
     setLoading(true)
-    const sixAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().slice(0, 10)
+    try {
+      const sixAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().slice(0, 10)
 
-    let clQ = supabase.from('clientes').select('id, nome, banco, valor, ps, data, consultor_id, crm_status').gte('data', sixAgo)
-    let vdQ = supabase.from('vendas').select('id, cliente_nome, valor, status, data, consultor_id').gte('data', sixAgo)
-    let cmQ = supabase.from('comissoes').select('ps, status, clientes(consultor_id)')
+      let clQ = supabase.from('clientes').select('id, nome, banco, valor, ps, data, consultor_id, crm_status').gte('data', sixAgo)
+      let vdQ = supabase.from('vendas').select('id, cliente_nome, valor, status, data, consultor_id').gte('data', sixAgo)
+      let cmQ = supabase.from('comissoes').select('ps, status, consultor_id')
 
-    const isPersonal = isAdmin && dashView === 'pessoal'
-    if (!isAdmin || isPersonal) {
-      clQ = clQ.eq('consultor_id', profile?.id)
-      vdQ = vdQ.eq('consultor_id', profile?.id)
-    }
+      const isPersonal = isAdmin && dashView === 'pessoal'
+      if (!isAdmin || isPersonal) {
+        clQ = clQ.eq('consultor_id', profile.id)
+        vdQ = vdQ.eq('consultor_id', profile.id)
+        cmQ = cmQ.eq('consultor_id', profile.id)
+      }
 
-    const [cl, vd, cm] = await Promise.all([clQ, vdQ, cmQ])
+      const [cl, vd, cm] = await Promise.all([clQ, vdQ, cmQ])
 
-    const clients = cl.data || []
-    const vendas = vd.data || []
-    const comissoes = isAdmin && !isPersonal ? (cm.data || []) : (cm.data || []).filter(c => c.clientes?.consultor_id === profile?.id)
+      const clients = cl.data || []
+      const vendas = vd.data || []
+      const comissoes = cm.data || []
 
-    // This month / last month
-    const thisCl  = clients.filter(c => c.data?.startsWith(thisMonth))
-    const lastCl  = clients.filter(c => c.data?.startsWith(lastMonth))
-    const thisVd  = vendas.filter(v => v.data?.startsWith(thisMonth))
-    const lastVd  = vendas.filter(v => v.data?.startsWith(lastMonth))
+      const thisCl  = clients.filter(c => c.data?.startsWith(thisMonth))
+      const lastCl  = clients.filter(c => c.data?.startsWith(lastMonth))
+      const thisVd  = vendas.filter(v => v.data?.startsWith(thisMonth))
+      const lastVd  = vendas.filter(v => v.data?.startsWith(lastMonth))
 
-    const thisValor = thisCl.reduce((s, c) => s + (c.valor || 0), 0)
-    const lastValor = lastCl.reduce((s, c) => s + (c.valor || 0), 0)
-    const thisVdVal = thisVd.reduce((s, v) => s + (v.valor || 0), 0)
-    const lastVdVal = lastVd.reduce((s, v) => s + (v.valor || 0), 0)
+      const thisValor = thisCl.reduce((s, c) => s + (c.valor || 0), 0)
+      const lastValor = lastCl.reduce((s, c) => s + (c.valor || 0), 0)
+      const thisVdVal = thisVd.reduce((s, v) => s + (v.valor || 0), 0)
+      const lastVdVal = lastVd.reduce((s, v) => s + (v.valor || 0), 0)
 
-    const pendente = comissoes.filter(c => c.status === 'Pendente').reduce((s, c) => s + (c.ps || 0), 0)
-    const pago = comissoes.filter(c => c.status === 'Pago').reduce((s, c) => s + (c.ps || 0), 0)
+      const pendente = comissoes.filter(c => c.status === 'Pendente').reduce((s, c) => s + (c.ps || 0), 0)
+      const pago = comissoes.filter(c => c.status === 'Pago').reduce((s, c) => s + (c.ps || 0), 0)
 
-    // 6-month chart data
-    const months = []
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-      const label = MONTHS_SHORT[d.getMonth()]
-      const mClients = clients.filter(c => c.data?.startsWith(key))
-      months.push({
-        label, key,
-        clients: mClients.length,
-        valor: mClients.reduce((s, c) => s + (c.valor || 0), 0),
-        isCurrent: key === thisMonth,
+      const months = []
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        const mClients = clients.filter(c => c.data?.startsWith(key))
+        months.push({
+          label: MONTHS_SHORT[d.getMonth()], key,
+          clients: mClients.length,
+          valor: mClients.reduce((s, c) => s + (c.valor || 0), 0),
+          isCurrent: key === thisMonth,
+        })
+      }
+
+      const recentClients = [...thisCl].sort((a, b) => new Date(b.data) - new Date(a.data)).slice(0, 5)
+      const recentVendas  = [...thisVd].sort((a, b) => new Date(b.data) - new Date(a.data)).slice(0, 5)
+
+      setChart(months)
+      setData({
+        kpi: {
+          clients: { cur: thisCl.length, prev: lastCl.length },
+          valor:   { cur: thisValor, prev: lastValor },
+          vendas:  { cur: thisVd.length, prev: lastVd.length },
+          vendaVal:{ cur: thisVdVal, prev: lastVdVal },
+        },
+        pendente, pago,
+        recentClients, recentVendas,
+        caixaCount: thisCl.filter(c => c.banco === 'Caixa').length,
+        santCount:  thisCl.filter(c => c.banco === 'Santander').length,
       })
+    } catch (err) {
+      console.error('Dashboard load error:', err)
+      setData(null)
+    } finally {
+      setLoading(false)
     }
-
-    // Recent clients & vendas (this month, sorted desc by date)
-    const recentClients = [...thisCl].sort((a, b) => new Date(b.data) - new Date(a.data)).slice(0, 5)
-    const recentVendas  = [...thisVd].sort((a, b) => new Date(b.data) - new Date(a.data)).slice(0, 5)
-
-    setChart(months)
-    setData({
-      kpi: {
-        clients: { cur: thisCl.length, prev: lastCl.length },
-        valor:   { cur: thisValor, prev: lastValor },
-        vendas:  { cur: thisVd.length, prev: lastVd.length },
-        vendaVal:{ cur: thisVdVal, prev: lastVdVal },
-      },
-      pendente, pago,
-      recentClients, recentVendas,
-      caixaCount: thisCl.filter(c => c.banco === 'Caixa').length,
-      santCount:  thisCl.filter(c => c.banco === 'Santander').length,
-    })
-    setLoading(false)
   }
 
   const maxChart = Math.max(...chart.map(m => m.clients), 1)
@@ -182,7 +186,13 @@ export default function Dashboard() {
             <div key={i} className="card" style={{ height: 110, background: 'var(--hover)', animation: 'shimmerPulse 1.4s ease infinite' }} />
           ))}
         </div>
-      ) : data && (
+      ) : !data ? (
+        <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)' }}>
+          <p style={{ fontSize: 15, marginBottom: 8 }}>Não foi possível carregar os dados.</p>
+          <p style={{ fontSize: 13 }}>Verifique a conexão com o banco em <strong>Configurações</strong>.</p>
+          <button onClick={load} className="btn btn-secondary btn-sm" style={{ marginTop: 12 }}>Tentar novamente</button>
+        </div>
+      ) : (
         <>
           {/* KPIs */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 14, marginBottom: 24 }}>
