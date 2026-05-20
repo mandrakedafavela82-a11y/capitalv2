@@ -461,6 +461,7 @@ create table if not exists public.metas (
 alter table public.metas enable row level security;
 drop policy if exists "metas: admin tudo"       on public.metas;
 drop policy if exists "metas: consultor seus"   on public.metas;
+drop policy if exists "metas: leitura todos"    on public.metas;
 create policy "metas: admin tudo"     on public.metas for all using (public.is_admin())              with check (public.is_admin());
 create policy "metas: consultor seus" on public.metas for all using (consultor_id = auth.uid())      with check (consultor_id = auth.uid());
 create policy "metas: leitura todos"  on public.metas for select using (auth.role() = 'authenticated');
