@@ -8,10 +8,8 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) loadProfile(session.user)
-      else setLoading(false)
-    })
+    // Timeout de segurança: se após 8s ainda estiver loading, libera
+    const timeout = setTimeout(() => setLoading(false), 8000)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') { setProfile(null); setLoading(false); return }
@@ -19,38 +17,43 @@ export function AuthProvider({ children }) {
       else { setProfile(null); setLoading(false) }
     })
 
-    return () => subscription.unsubscribe()
+    return () => { subscription.unsubscribe(); clearTimeout(timeout) }
   }, [])
 
   async function loadProfile(user) {
     setLoading(true)
-    // Google OAuth pre-approval check
-    const providers = user.app_metadata?.providers || []
-    const isGoogle = providers.includes('google') || user.app_metadata?.provider === 'google'
+    try {
+      // Google OAuth pre-approval check
+      const providers = user.app_metadata?.providers || []
+      const isGoogle = providers.includes('google') || user.app_metadata?.provider === 'google'
 
-    if (isGoogle) {
-      const { data: approved, error } = await supabase
-        .from('approved_emails')
-        .select('id, role')
-        .eq('email', user.email)
+      if (isGoogle) {
+        const { data: approved } = await supabase
+          .from('approved_emails')
+          .select('id, role')
+          .eq('email', user.email)
+          .maybeSingle()
+
+        if (!approved) {
+          await supabase.auth.signOut()
+          setProfile(null)
+          return
+        }
+      }
+
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
         .maybeSingle()
 
-      if (error || !approved) {
-        await supabase.auth.signOut()
-        setProfile(null)
-        setLoading(false)
-        return
-      }
+      setProfile(prof || null)
+    } catch (err) {
+      console.error('Erro ao carregar perfil:', err)
+      setProfile(null)
+    } finally {
+      setLoading(false)
     }
-
-    const { data: prof } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-
-    setProfile(prof || null)
-    setLoading(false)
   }
 
   async function signInWithGoogle() {
