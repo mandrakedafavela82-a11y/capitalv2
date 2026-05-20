@@ -306,6 +306,12 @@ end $$;
 -- v3 MIGRATION — execute mesmo se já tiver rodado o v2
 -- ============================================================
 
+-- Helper: verifica se é operacional (precisa existir antes das políticas que a usam)
+create or replace function public.is_operacional()
+returns boolean language sql security definer as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'operacional');
+$$;
+
 -- ── Tabela: vendas ──────────────────────────────────────────
 create table if not exists public.vendas (
   id           uuid          primary key default uuid_generate_v4(),
@@ -359,12 +365,6 @@ alter table public.profiles       drop constraint if exists profiles_role_check;
 alter table public.profiles       add  constraint profiles_role_check check (role in ('admin','consultor','operacional'));
 alter table public.approved_emails drop constraint if exists approved_emails_role_check;
 alter table public.approved_emails add  constraint approved_emails_role_check check (role in ('admin','consultor','operacional'));
-
--- Helper: verifica se é operacional
-create or replace function public.is_operacional()
-returns boolean language sql security definer as $$
-  select exists (select 1 from public.profiles where id = auth.uid() and role = 'operacional');
-$$;
 
 -- Auxiliar pode ver todos os clientes (read-only)
 drop policy if exists "clientes: operacional vê tudo" on public.clientes;

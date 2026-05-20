@@ -66,13 +66,13 @@ export default function Dashboard() {
 
       let clQ = supabase.from('clientes').select('id, nome, banco, valor, ps, data, consultor_id, crm_status').gte('data', sixAgo)
       let vdQ = supabase.from('vendas').select('id, cliente_nome, valor, status, data, consultor_id').gte('data', sixAgo)
-      let cmQ = supabase.from('comissoes').select('ps, status, consultor_id')
+      // comissoes: RLS já filtra por consultor automaticamente; admin vê tudo
+      const cmQ = supabase.from('comissoes').select('ps, status')
 
       const isPersonal = isAdmin && dashView === 'pessoal'
       if (!isAdmin || isPersonal) {
         clQ = clQ.eq('consultor_id', profile.id)
         vdQ = vdQ.eq('consultor_id', profile.id)
-        cmQ = cmQ.eq('consultor_id', profile.id)
       }
 
       const [cl, vd, cm] = await Promise.all([clQ, vdQ, cmQ])
