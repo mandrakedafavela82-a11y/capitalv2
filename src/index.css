@@ -221,9 +221,9 @@ select option { background: var(--card); color: var(--text); }
   background: rgba(0,0,0,.7);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  display: flex; align-items: center; justify-content: center;
-  padding: 16px;
   overflow-y: auto;
+  display: flex;
+  padding: 24px 16px;
 }
 .modal {
   background: var(--card);
@@ -232,8 +232,7 @@ select option { background: var(--card); color: var(--text); }
   padding: 28px;
   width: 100%;
   max-width: 520px;
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
+  margin: auto;
   box-shadow: var(--shadow-lg);
 }
 [data-theme="dark"] .modal {

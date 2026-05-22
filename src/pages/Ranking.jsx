@@ -21,29 +21,36 @@ export default function Ranking() {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { load() }, [mes])
+  useEffect(() => { load() }, [])
+  useEffect(() => {
+    const cached = getCached('ranking-all')
+    if (cached) buildRanking(cached.c, cached.p)
+  }, [mes])
 
   async function load() {
-    const cacheKey = `ranking-${mes}-${ano}`
+    const cacheKey = `ranking-all`
     const cached = getCached(cacheKey)
-    if (cached) { setData(cached); setLoading(false) }
+    if (cached) { buildRanking(cached.c, cached.p); setLoading(false) }
     else setLoading(true)
 
-    const inicio = `${ano}-${String(mes).padStart(2,'0')}-01`
-    const fim = mes === 12
-      ? `${ano + 1}-01-01`
-      : `${ano}-${String(mes + 1).padStart(2,'0')}-01`
-
     const [clients, profiles] = await Promise.all([
-      supabase.from('clientes').select('consultor_id, valor, banco').gte('data', inicio).lt('data', fim),
+      supabase.from('clientes').select('consultor_id, valor, banco, data'),
       supabase.from('profiles').select('id, nome, avatar, avatar_url').in('role', ['admin','consultor']),
     ])
 
     const c = clients.data || []
     const p = profiles.data || []
+    setCached(cacheKey, { c, p })
+    buildRanking(c, p)
+    setLoading(false)
+  }
+
+  function buildRanking(allClients, profiles) {
+    const mesStr = `${ano}-${String(mes).padStart(2,'0')}`
+    const c = allClients.filter(cl => cl.data?.startsWith(mesStr))
 
     const map = {}
-    p.forEach(u => { map[u.id] = { ...u, total: 0, caixa: 0, santander: 0, count: 0 } })
+    profiles.forEach(u => { map[u.id] = { ...u, total: 0, caixa: 0, santander: 0, count: 0 } })
     c.forEach(cl => {
       if (!cl.consultor_id || !map[cl.consultor_id]) return
       map[cl.consultor_id].total += (cl.valor || 0)
@@ -52,12 +59,11 @@ export default function Ranking() {
       if (cl.banco === 'Santander') map[cl.consultor_id].santander += (cl.valor || 0)
     })
 
-    const ranked = Object.values(map)
-      .filter(u => u.total > 0)
-      .sort((a, b) => b.total - a.total)
-    setCached(cacheKey, ranked)
-    setData(ranked)
-    setLoading(false)
+    setData(
+      Object.values(map)
+        .filter(u => u.total > 0)
+        .sort((a, b) => b.total - a.total)
+    )
   }
 
   // Pódio escadinha: posição visual [2º, 1º, 3º]
