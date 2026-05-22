@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { fmtCur, fmtDate } from '../lib/utils'
 import { toast } from 'sonner'
 import { X, Bell, Paperclip, Upload, Trash2, ExternalLink } from 'lucide-react'
+import Modal from '../components/Modal'
 
 const COLS = [
   { id: 'negociando',  label: 'Negociando',         color: '#3b82f6' },
@@ -94,8 +95,7 @@ function DetailModal({ client, onClose, onUpdate, isAdmin, profileId }) {
   const canEdit = isAdmin || client.consultor_id === profileId
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" style={{ maxWidth: 580, maxHeight: '88vh' }} onClick={e => e.stopPropagation()}>
+    <Modal onClose={onClose} maxWidth={580}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <div style={{ flex: 1 }}>
             <h2 style={{ margin: 0, fontSize: 18 }}>{client.nome}</h2>
@@ -265,8 +265,7 @@ function DetailModal({ client, onClose, onUpdate, isAdmin, profileId }) {
             )}
           </div>
         )}
-      </div>
-    </div>
+    </Modal>
   )
 }
 

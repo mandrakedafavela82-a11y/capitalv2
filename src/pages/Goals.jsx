@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { fmtCur } from '../lib/utils'
 import { toast } from 'sonner'
 import { Plus, Pencil, Target, ChevronLeft, ChevronRight } from 'lucide-react'
+import Modal from '../components/Modal'
 
 const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
@@ -223,8 +224,8 @@ export default function Goals() {
 
       {/* Modal */}
       {modal && (
-        <div className="modal-overlay" onClick={() => setModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+        <Modal onClose={() => setModal(false)}>
+          
             <h2>{editing ? 'Editar Meta' : 'Nova Meta'} — {MONTHS[month - 1]}/{year}</h2>
             {isAdmin && (
               <div className="modal-row">
@@ -252,8 +253,7 @@ export default function Goals() {
                 disabled={!form.meta_valor || (isAdmin && !form.consultor_id)}
               >Salvar</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

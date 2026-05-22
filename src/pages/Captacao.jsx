@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { fmtDate, todayStr } from '../lib/utils'
 import { toast } from 'sonner'
 import { Plus, Trash2, ChevronDown, ChevronUp, BarChart2, Send, Upload } from 'lucide-react'
+import Modal from '../components/Modal'
 
 const EMPTY_LIST = { nome: '', descricao: '', banco: 'Caixa', data: todayStr() }
 
@@ -441,8 +442,7 @@ export default function Captacao() {
 
       {/* Create list modal */}
       {modal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
+        <Modal onClose={closeModal} maxWidth={560}>
             <h2>{isAdmin ? 'Nova Lista de Captação' : 'Nova Lista'}</h2>
 
             <div className="modal-row">
@@ -538,14 +538,12 @@ export default function Captacao() {
               <button onClick={closeModal} className="btn btn-secondary">Cancelar</button>
               <button onClick={save} className="btn btn-primary" disabled={!form.nome}>Criar Lista</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Sim chat modal */}
       {simChat && (
-        <div className="modal-overlay" onClick={() => setSimChat(null)}>
-          <div className="modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+        <Modal onClose={() => setSimChat(null)} maxWidth={440}>
             <h2>Enviar Simulação</h2>
             <div style={{ padding: '10px 14px', background: 'var(--hover)', borderRadius: 10, marginBottom: 16 }}>
               <div style={{ fontWeight: 600 }}>{simChat.lead.nome}</div>
@@ -579,8 +577,7 @@ export default function Captacao() {
                 {simSending ? 'Enviando...' : 'Enviar Simulação'}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

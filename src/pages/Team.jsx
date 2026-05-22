@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { fmtCur } from '../lib/utils'
 import { toast } from 'sonner'
 import { UserPlus, Pencil, Trash2, Shield, Users } from 'lucide-react'
+import Modal from '../components/Modal'
 
 const ROLE_LABEL = { admin: 'Administrador', consultor: 'Consultor', operacional: 'Operacional' }
 const ROLE_COLOR = {
@@ -206,8 +207,7 @@ export default function Team() {
 
       {/* Edit role modal */}
       {editModal && (
-        <div className="modal-overlay" onClick={() => setEditModal(null)}>
-          <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+        <Modal onClose={() => setEditModal(null)} maxWidth={400}>
             <h2>Alterar Cargo — {editModal.nome}</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
               {Object.entries(ROLE_LABEL).map(([key, label]) => (
@@ -227,14 +227,12 @@ export default function Team() {
               ))}
             </div>
             <div className="modal-actions"><button onClick={() => setEditModal(null)} className="btn btn-secondary">Fechar</button></div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Add approved email modal */}
       {addModal && (
-        <div className="modal-overlay" onClick={() => setAddModal(false)}>
-          <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+        <Modal onClose={() => setAddModal(false)} maxWidth={420}>
             <h2>Autorizar E-mail para Google Login</h2>
             <div className="modal-row"><label>E-mail *</label><input type="email" value={addForm.email} onChange={e => setAddForm(p => ({ ...p, email: e.target.value }))} placeholder="usuario@gmail.com" /></div>
             <div className="modal-row"><label>Nome (opcional)</label><input value={addForm.nome} onChange={e => setAddForm(p => ({ ...p, nome: e.target.value }))} placeholder="Nome do usuário" /></div>
@@ -250,8 +248,7 @@ export default function Team() {
               <button onClick={() => setAddModal(false)} className="btn btn-secondary">Cancelar</button>
               <button onClick={addApproved} className="btn btn-primary" disabled={!addForm.email}>Autorizar</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

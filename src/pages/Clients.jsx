@@ -5,6 +5,7 @@ import { fmtCur, fmtDate, todayStr } from '../lib/utils'
 import { getCached, setCached } from '../lib/cache'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
+import Modal from '../components/Modal'
 
 const EMPTY = {
   nome: '', cpf: '-', cidade: '-', banco: 'Caixa',
@@ -170,8 +171,7 @@ export default function Clients() {
 
       {/* Modal */}
       {modal && (
-        <div className="modal-overlay" onClick={() => setModal(false)}>
-          <div className="modal" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
+        <Modal onClose={() => setModal(false)} maxWidth={600}>
             <h2>{editing ? 'Editar Cliente' : 'Novo Cliente'}</h2>
             <div className="modal-row">
               <label>Nome *</label>
@@ -234,8 +234,7 @@ export default function Clients() {
               <button onClick={() => setModal(false)} className="btn btn-secondary">Cancelar</button>
               <button onClick={save} className="btn btn-primary" disabled={!form.nome}>Salvar</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

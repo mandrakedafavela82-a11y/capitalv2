@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { fmtCur } from '../lib/utils'
 import { toast } from 'sonner'
 import { Send, Image, X, Reply, Copy, BarChart2, Plus, Settings, Pencil, Trash2 } from 'lucide-react'
+import Modal from '../components/Modal'
 
 // ── helpers ────────────────────────────────────────────────────
 function Avatar({ nome, avatarUrl, size = 32 }) {
@@ -97,8 +98,7 @@ function SimRespModal({ msg, onClose, onSave }) {
   const [status, setStatus] = useState(msg.simulacao_status || 'pending')
   const [resposta, setResposta] = useState(msg.simulacao_resposta || '')
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+    <Modal onClose={onClose} maxWidth={420}>
         <h2>Responder Simulação</h2>
         <div style={{ padding: '10px 14px', background: 'var(--hover)', borderRadius: 10, marginBottom: 16, fontSize: 13 }}>
           <div style={{ fontWeight: 600 }}>{msg.simulacao?.client_name}</div>
@@ -121,8 +121,7 @@ function SimRespModal({ msg, onClose, onSave }) {
           <button onClick={onClose} className="btn btn-secondary">Cancelar</button>
           <button onClick={() => onSave(status, resposta)} className="btn btn-primary">Salvar</button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -257,8 +256,7 @@ function MessageBubble({ msg, isMe, isNew, onReply, isOperacional, isAdmin, prof
 function SimModal({ onClose, onSend }) {
   const [form, setForm] = useState({ client_name: '', cpf: '', phone: '', product: '', value: '', notes: '' })
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+    <Modal onClose={onClose}>
         <h2>Enviar Simulação</h2>
         <div className="modal-row"><label>Nome do Cliente *</label><input value={form.client_name} onChange={e => setForm(p => ({ ...p, client_name: e.target.value }))} placeholder="João da Silva" /></div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -272,8 +270,7 @@ function SimModal({ onClose, onSend }) {
           <button onClick={onClose} className="btn btn-secondary">Cancelar</button>
           <button onClick={() => { if (!form.client_name) return toast.error('Informe o nome'); onSend(form); onClose() }} className="btn btn-primary">Enviar</button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -281,8 +278,7 @@ function SimModal({ onClose, onSend }) {
 function RoomsModal({ rooms, onClose, onAdd, onDelete }) {
   const [form, setForm] = useState({ nome: '', cor: 'indigo', descricao: '' })
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
+    <Modal onClose={onClose}>
         <h2>Gerenciar Salas</h2>
         <div className="modal-row"><label>Nome</label><input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} placeholder="Ex: Operacional" /></div>
         <div className="modal-row">
@@ -309,8 +305,7 @@ function RoomsModal({ rooms, onClose, onAdd, onDelete }) {
           </div>
         )}
         <div className="modal-actions"><button onClick={onClose} className="btn btn-secondary">Fechar</button></div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 

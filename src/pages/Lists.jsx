@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { fmtDate, todayStr } from '../lib/utils'
 import { toast } from 'sonner'
 import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import Modal from '../components/Modal'
 
 const EMPTY_LIST = { nome: '', banco: 'Caixa', data: todayStr() }
 
@@ -208,8 +209,8 @@ export default function Lists() {
 
       {/* Modal */}
       {modal && (
-        <div className="modal-overlay" onClick={() => setModal(false)}>
-          <div className="modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
+        <Modal onClose={() => setModal(false)} maxWidth={560}>
+          
             <h2>Nova Lista</h2>
             <div className="modal-row">
               <label>Nome da Lista *</label>
@@ -246,8 +247,7 @@ export default function Lists() {
               <button onClick={() => setModal(false)} className="btn btn-secondary">Cancelar</button>
               <button onClick={save} className="btn btn-primary" disabled={!form.nome}>Criar Lista</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

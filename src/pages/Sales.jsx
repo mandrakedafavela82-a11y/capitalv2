@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { fmtCur, fmtDate, todayStr } from '../lib/utils'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
+import Modal from '../components/Modal'
 
 const EMPTY = {
   cliente_nome: '', banco: 'Caixa', valor: '', ps: '',
@@ -198,8 +199,8 @@ export default function Sales() {
 
       {/* Modal */}
       {modal && (
-        <div className="modal-overlay" onClick={() => setModal(false)}>
-          <div className="modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
+        <Modal onClose={() => setModal(false)}>
+          
             <h2>{editing ? 'Editar Venda' : 'Nova Venda'}</h2>
             <div className="modal-row">
               <label>Nome do Cliente *</label>
@@ -262,8 +263,7 @@ export default function Sales() {
               <button onClick={() => setModal(false)} className="btn btn-secondary">Cancelar</button>
               <button onClick={save} className="btn btn-primary" disabled={!form.cliente_nome}>Salvar</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   )
