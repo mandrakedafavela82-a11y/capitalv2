@@ -17,6 +17,7 @@ import Config from './pages/Config'
 import Team from './pages/Team'
 import Reports from './pages/Reports'
 import Profits from './pages/Profits'
+import RankingTV from './pages/RankingTV'
 
 function Guard({ children, roles }) {
   const { profile, loading } = useAuth()
@@ -43,6 +44,7 @@ function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/tv" element={<RankingTV />} />
       <Route path="/login" element={profile ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/" element={<Guard><Layout /></Guard>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
