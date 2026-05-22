@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { fmtCur } from '../lib/utils'
+import { getCached, setCached } from '../lib/cache'
 import { Trophy } from 'lucide-react'
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
@@ -23,7 +24,11 @@ export default function Ranking() {
   useEffect(() => { load() }, [mes])
 
   async function load() {
-    setLoading(true)
+    const cacheKey = `ranking-${mes}-${ano}`
+    const cached = getCached(cacheKey)
+    if (cached) { setData(cached); setLoading(false) }
+    else setLoading(true)
+
     const inicio = `${ano}-${String(mes).padStart(2,'0')}-01`
     const fim = mes === 12
       ? `${ano + 1}-01-01`
@@ -47,11 +52,11 @@ export default function Ranking() {
       if (cl.banco === 'Santander') map[cl.consultor_id].santander += (cl.valor || 0)
     })
 
-    setData(
-      Object.values(map)
-        .filter(u => u.total > 0)
-        .sort((a, b) => b.total - a.total)
-    )
+    const ranked = Object.values(map)
+      .filter(u => u.total > 0)
+      .sort((a, b) => b.total - a.total)
+    setCached(cacheKey, ranked)
+    setData(ranked)
     setLoading(false)
   }
 

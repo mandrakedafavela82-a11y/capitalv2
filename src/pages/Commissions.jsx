@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { fmtCur, fmtDate, currentMonth, monthStr } from '../lib/utils'
+import { getCached, setCached } from '../lib/cache'
 import { toast } from 'sonner'
 import { CheckCircle } from 'lucide-react'
 
@@ -14,10 +15,14 @@ export default function Commissions() {
   useEffect(() => { load() }, [profile])
 
   async function load() {
-    setLoading(true)
+    const cacheKey = `comissoes-${profile?.id}-${isAdmin}`
+    const cached = getCached(cacheKey)
+    if (cached) { setComissoes(cached); setLoading(false) }
+    else setLoading(true)
+
     const { data, error } = await supabase
       .from('comissoes')
-      .select('*, clientes(nome, consultor_id, data, banco)')
+      .select('id,ps,status,created_at,clientes(nome,consultor_id,data,banco)')
       .order('created_at', { ascending: false })
 
     if (error) { setLoading(false); return }
@@ -26,6 +31,7 @@ export default function Commissions() {
       ? data || []
       : (data || []).filter(c => c.clientes?.consultor_id === profile?.id)
 
+    setCached(cacheKey, mine)
     setComissoes(mine)
     setLoading(false)
   }

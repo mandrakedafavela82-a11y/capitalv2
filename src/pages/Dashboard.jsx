@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { fmtCur } from '../lib/utils'
+import { getCached, setCached } from '../lib/cache'
 import { Users, DollarSign, TrendingUp, Award, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react'
 
 const MONTHS_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -60,7 +61,10 @@ export default function Dashboard() {
 
   async function load() {
     if (!profile?.id) return
-    setLoading(true)
+    const cacheKey = `dashboard-${profile.id}-${dashView}`
+    const cached = getCached(cacheKey)
+    if (cached) { setData(cached.data); setChart(cached.chart); setLoading(false) }
+    else setLoading(true)
     try {
       const sixAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().slice(0, 10)
 
@@ -110,8 +114,7 @@ export default function Dashboard() {
       const recentClients = [...thisCl].sort((a, b) => new Date(b.data) - new Date(a.data)).slice(0, 5)
       const recentVendas  = [...thisVd].sort((a, b) => new Date(b.data) - new Date(a.data)).slice(0, 5)
 
-      setChart(months)
-      setData({
+      const newData = {
         kpi: {
           clients: { cur: thisCl.length, prev: lastCl.length },
           valor:   { cur: thisValor, prev: lastValor },
@@ -122,7 +125,10 @@ export default function Dashboard() {
         recentClients, recentVendas,
         caixaCount: thisCl.filter(c => c.banco === 'Caixa').length,
         santCount:  thisCl.filter(c => c.banco === 'Santander').length,
-      })
+      }
+      setCached(cacheKey, { data: newData, chart: months })
+      setChart(months)
+      setData(newData)
     } catch (err) {
       console.error('Dashboard load error:', err)
       setData(null)

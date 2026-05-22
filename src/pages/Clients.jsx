@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { fmtCur, fmtDate, todayStr } from '../lib/utils'
+import { getCached, setCached } from '../lib/cache'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
 
@@ -25,12 +26,19 @@ export default function Clients() {
   useEffect(() => { load() }, [profile])
 
   async function load() {
-    setLoading(true)
+    const cacheKey = `clients-${profile?.id}-${isAdmin}`
+    const cached = getCached(cacheKey)
+    if (cached) { setClients(cached.clients); setUsers(cached.users); setLoading(false) }
+    else setLoading(true)
+
     const [c, u] = await Promise.all([
-      supabase.from('clientes').select('*').order('created_at', { ascending: false }),
+      supabase.from('clientes')
+        .select('id,nome,cpf,cidade,banco,valor,ps,data,telefone,email,endereco,produto,consultor_id,created_at,crm_status')
+        .order('created_at', { ascending: false }),
       supabase.from('profiles').select('id, nome'),
     ])
     const mine = isAdmin ? (c.data || []) : (c.data || []).filter(x => x.consultor_id === profile?.id)
+    setCached(cacheKey, { clients: mine, users: u.data || [] })
     setClients(mine)
     setUsers(u.data || [])
     setLoading(false)
