@@ -28,13 +28,14 @@ export function AuthProvider({ children }) {
       const isGoogle = providers.includes('google') || user.app_metadata?.provider === 'google'
 
       if (isGoogle) {
-        const { data: approved } = await supabase
+        const { data: approved, error: approvedErr } = await supabase
           .from('approved_emails')
           .select('id, role')
           .eq('email', user.email)
           .maybeSingle()
 
-        if (!approved) {
+        // Só desloga se CONFIRMADO que o email não está na lista (sem erro de query)
+        if (!approvedErr && !approved) {
           await supabase.auth.signOut()
           setProfile(null)
           return
