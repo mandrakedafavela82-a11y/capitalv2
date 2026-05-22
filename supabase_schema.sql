@@ -205,17 +205,19 @@ create policy "clientes: consultor exclui os seus"
   using (consultor_id = auth.uid());
 
 -- ── listas ──────────────────────────────────────────────────
-drop policy if exists "listas: admin tudo"        on public.listas;
-drop policy if exists "listas: consultor lê as suas" on public.listas;
+drop policy if exists "listas: admin tudo"           on public.listas;
+drop policy if exists "listas: consultor lê as suas"  on public.listas;
+drop policy if exists "listas: consultor gerencia suas" on public.listas;
 
 create policy "listas: admin tudo"
   on public.listas for all
   using (public.is_admin())
   with check (public.is_admin());
 
-create policy "listas: consultor lê as suas"
-  on public.listas for select
-  using (consultor_id = auth.uid());
+create policy "listas: consultor gerencia suas"
+  on public.listas for all
+  using (consultor_id = auth.uid())
+  with check (consultor_id = auth.uid());
 
 -- ── mensagens ───────────────────────────────────────────────
 drop policy if exists "mensagens: leitura" on public.mensagens;
