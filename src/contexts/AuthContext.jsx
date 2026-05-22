@@ -5,16 +5,22 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null)
+  const [authUser, setAuthUser] = useState(undefined) // undefined=carregando, null=sem sessão
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Timeout de segurança: se após 8s ainda estiver loading, libera
     const timeout = setTimeout(() => setLoading(false), 8000)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') { setProfile(null); setLoading(false); return }
-      if (session?.user) await loadProfile(session.user)
-      else { setProfile(null); setLoading(false) }
+      if (event === 'SIGNED_OUT') {
+        setAuthUser(null); setProfile(null); setLoading(false); return
+      }
+      if (session?.user) {
+        setAuthUser(session.user)
+        await loadProfile(session.user)
+      } else {
+        setAuthUser(null); setProfile(null); setLoading(false)
+      }
     })
 
     return () => { subscription.unsubscribe(); clearTimeout(timeout) }
@@ -23,34 +29,41 @@ export function AuthProvider({ children }) {
   async function loadProfile(user) {
     setLoading(true)
     try {
-      // Google OAuth pre-approval check
       const providers = user.app_metadata?.providers || []
       const isGoogle = providers.includes('google') || user.app_metadata?.provider === 'google'
 
       if (isGoogle) {
-        const { data: approved } = await supabase
+        const { data: approved, error: approvedErr } = await supabase
           .from('approved_emails')
           .select('id, role')
           .eq('email', user.email)
           .maybeSingle()
 
-        if (!approved) {
+        // Só faz logout se a query FUNCIONOU e o email não está aprovado.
+        // Se deu erro de rede/RLS, mantém a sessão para não deslogar indevidamente.
+        if (!approvedErr && approved === null) {
           await supabase.auth.signOut()
-          setProfile(null)
+          setAuthUser(null); setProfile(null)
           return
         }
       }
 
-      const { data: prof } = await supabase
+      const { data: prof, error: profErr } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle()
 
+      if (profErr) {
+        console.error('Erro ao carregar perfil:', profErr)
+        // Mantém authUser válido — sessão existe, só o perfil falhou
+        setProfile(null)
+        return
+      }
+
       setProfile(prof || null)
     } catch (err) {
       console.error('Erro ao carregar perfil:', err)
-      setProfile(null)
     } finally {
       setLoading(false)
     }
@@ -81,7 +94,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      profile, loading,
+      profile, loading, authUser,
       isAdmin: profile?.role === 'admin',
       isOperacional: profile?.role === 'operacional',
       isConsultor: profile?.role === 'consultor',

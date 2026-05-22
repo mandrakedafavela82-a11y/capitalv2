@@ -19,9 +19,10 @@ import Reports from './pages/Reports'
 import Profits from './pages/Profits'
 
 function Guard({ children, roles }) {
-  const { profile, loading } = useAuth()
+  const { profile, authUser, loading } = useAuth()
   if (loading) return <Loader />
-  if (!profile) return <Navigate to="/login" replace />
+  if (authUser === null) return <Navigate to="/login" replace />
+  if (!profile) return <Loader />
   if (roles && !roles.includes(profile.role)) return <Navigate to="/dashboard" replace />
   return children
 }
@@ -38,12 +39,12 @@ function Loader() {
 }
 
 function AppRoutes() {
-  const { profile, loading } = useAuth()
+  const { profile, authUser, loading } = useAuth()
   if (loading) return <Loader />
 
   return (
     <Routes>
-      <Route path="/login" element={profile ? <Navigate to="/dashboard" replace /> : <Login />} />
+      <Route path="/login" element={authUser && profile ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/" element={<Guard><Layout /></Guard>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard"  element={<Dashboard />} />
