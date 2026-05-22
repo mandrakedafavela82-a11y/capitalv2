@@ -35,7 +35,7 @@ export default function Ranking() {
       : `${ano}-${String(mes + 1).padStart(2,'0')}-01`
 
     const [clients, profiles] = await Promise.all([
-      supabase.from('clientes').select('consultor_id, valor, banco').gte('created_at', inicio).lt('created_at', fim),
+      supabase.from('clientes').select('consultor_id, valor, banco').gte('data', inicio).lt('data', fim),
       supabase.from('profiles').select('id, nome, avatar, avatar_url').in('role', ['admin','consultor']),
     ])
 
