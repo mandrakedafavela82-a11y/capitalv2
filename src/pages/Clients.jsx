@@ -66,12 +66,12 @@ export default function Clients() {
     }
     if (editing) {
       const { error } = await supabase.from('clientes').update(payload).eq('id', editing)
-      if (error) return toast.error('Erro ao salvar')
+      if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao salvar') }
       setClients(prev => prev.map(c => c.id === editing ? { ...c, ...payload } : c))
       toast.success('Cliente atualizado')
     } else {
       const { data, error } = await supabase.from('clientes').insert(payload).select().single()
-      if (error) return toast.error('Erro ao salvar')
+      if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao salvar') }
       setClients(prev => [data, ...prev])
       toast.success('Cliente adicionado')
     }
@@ -81,7 +81,7 @@ export default function Clients() {
   async function remove(id) {
     if (!confirm('Excluir cliente?')) return
     const { error } = await supabase.from('clientes').delete().eq('id', id)
-    if (error) return toast.error('Erro ao excluir')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao excluir') }
     setClients(prev => prev.filter(c => c.id !== id))
     toast.success('Cliente removido')
   }

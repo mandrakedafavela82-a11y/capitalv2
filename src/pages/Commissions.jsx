@@ -46,7 +46,7 @@ export default function Commissions() {
   async function marcarPago(id) {
     if (!isAdmin) return
     const { error } = await supabase.from('comissoes').update({ status: 'Pago' }).eq('id', id)
-    if (error) return toast.error('Erro ao atualizar')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao atualizar') }
     setComissoes(prev => prev.map(c => c.id === id ? { ...c, status: 'Pago' } : c))
     toast.success('Marcado como pago')
   }

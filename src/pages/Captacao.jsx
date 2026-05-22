@@ -124,7 +124,7 @@ export default function Captacao() {
       consultor_id: profile?.id,
     }
     const { data: lista, error } = await supabase.from('listas').insert(payload).select().single()
-    if (error) return toast.error('Erro ao criar lista')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao criar lista') }
 
     const targets = assignedTo.length > 0 ? assignedTo : [profile?.id]
     let leadRows = []
@@ -144,7 +144,7 @@ export default function Captacao() {
 
     if (leadRows.length > 0) {
       const { error: le } = await supabase.from('lead_contatos').insert(leadRows)
-      if (le) toast.error('Lista criada mas erro ao importar leads')
+      if (le) { console.error('[DB]', le); toast.error(le.message || 'Lista criada mas erro ao importar leads') }
       else toast.success(`Lista criada com ${leadRows.length} lead(s)`)
     } else {
       toast.success('Lista criada')
@@ -165,7 +165,7 @@ export default function Captacao() {
   async function remove(id) {
     if (!confirm('Excluir lista e todos os leads?')) return
     const { error } = await supabase.from('listas').delete().eq('id', id)
-    if (error) return toast.error('Erro ao excluir')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao excluir') }
     setLists(prev => prev.filter(l => l.id !== id))
     toast.success('Lista removida')
   }
@@ -182,7 +182,7 @@ export default function Captacao() {
   async function cycleStatus(lead) {
     const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(lead.status) + 1) % STATUS_CYCLE.length]
     const { error } = await supabase.from('lead_contatos').update({ status: next }).eq('id', lead.id)
-    if (error) return toast.error('Erro ao atualizar')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao atualizar') }
     setLeadData(prev => ({ ...prev, [lead.lista_id]: (prev[lead.lista_id] || []).map(l => l.id === lead.id ? { ...l, status: next } : l) }))
     setLeadCounts(prev => {
       const c = { ...(prev[lead.lista_id] || {}) }
@@ -199,7 +199,7 @@ export default function Captacao() {
       banco: lista?.banco || 'Caixa', lista_id: lead.lista_id,
       consultor_id: profile?.id, data: todayStr(),
     }).select().single()
-    if (error) return toast.error('Erro ao enviar para CRM')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao enviar para CRM') }
     await supabase.from('lead_contatos').update({ status: 'added_to_crm', crm_id: client.id }).eq('id', lead.id)
     setLeadData(prev => ({ ...prev, [lead.lista_id]: (prev[lead.lista_id] || []).map(l => l.id === lead.id ? { ...l, status: 'added_to_crm', crm_id: client.id } : l) }))
     toast.success(`${lead.nome} enviado para CRM`)

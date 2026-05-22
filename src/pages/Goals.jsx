@@ -93,7 +93,7 @@ export default function Goals() {
 
     if (editing) {
       const { error } = await supabase.from('metas').update(payload).eq('id', editing)
-      if (error) return toast.error('Erro ao salvar meta')
+      if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao salvar meta') }
       setMetas(prev => prev.map(m => m.id === editing ? { ...m, ...payload } : m))
       toast.success('Meta atualizada')
     } else {

@@ -47,13 +47,13 @@ function DetailModal({ client, onClose, onUpdate, isAdmin, profileId }) {
 
   async function saveField(field, value) {
     const { error } = await supabase.from('clientes').update({ [field]: value }).eq('id', client.id)
-    if (error) { toast.error('Erro ao salvar'); return }
+    if (error) { console.error('[DB]', error); toast.error(error.message || 'Erro ao salvar'); return }
     onUpdate(client.id, { [field]: value })
   }
 
   async function saveForm() {
     const { error } = await supabase.from('clientes').update(form).eq('id', client.id)
-    if (error) return toast.error('Erro ao salvar')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao salvar') }
     onUpdate(client.id, form)
     toast.success('Salvo')
   }

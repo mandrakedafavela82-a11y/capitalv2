@@ -427,7 +427,7 @@ export default function Chat() {
   async function saveEdit() {
     if (!editingMsg || !editText.trim()) return
     const { error } = await supabase.from('mensagens').update({ texto: editText.trim() }).eq('id', editingMsg.id)
-    if (error) return toast.error('Erro ao editar')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao editar') }
     setMsgs(prev => prev.map(m => m.id === editingMsg.id ? { ...m, texto: editText.trim() } : m))
     setEditingMsg(null); setEditText('')
   }
@@ -435,7 +435,7 @@ export default function Chat() {
   async function deleteMsg(id) {
     if (!confirm('Excluir esta mensagem?')) return
     const { error } = await supabase.from('mensagens').delete().eq('id', id)
-    if (error) return toast.error('Erro ao excluir')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao excluir') }
     setMsgs(prev => prev.filter(m => m.id !== id))
     toast.success('Mensagem excluída')
   }
@@ -443,14 +443,14 @@ export default function Chat() {
   async function saveResposta(status, resposta) {
     if (!respModal) return
     const { error } = await supabase.from('mensagens').update({ simulacao_status: status, simulacao_resposta: resposta }).eq('id', respModal.id)
-    if (error) return toast.error('Erro ao salvar')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao salvar') }
     setMsgs(prev => prev.map(m => m.id === respModal.id ? { ...m, simulacao_status: status, simulacao_resposta: resposta } : m))
     setRespModal(null); toast.success('Resposta salva')
   }
 
   async function addRoom(form) {
     const { data, error } = await supabase.from('salas').insert(form).select().single()
-    if (error) return toast.error('Erro ao criar sala')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao criar sala') }
     setRooms(prev => [...prev, data]); toast.success('Sala criada')
   }
 

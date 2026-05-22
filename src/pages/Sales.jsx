@@ -80,12 +80,12 @@ export default function Sales() {
     }
     if (editing) {
       const { error } = await supabase.from('vendas').update(payload).eq('id', editing)
-      if (error) return toast.error('Erro ao salvar')
+      if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao salvar') }
       setVendas(prev => prev.map(v => v.id === editing ? { ...v, ...payload } : v))
       toast.success('Venda atualizada')
     } else {
       const { data, error } = await supabase.from('vendas').insert(payload).select().single()
-      if (error) return toast.error('Erro ao salvar')
+      if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao salvar') }
       setVendas(prev => [data, ...prev])
       toast.success('Venda adicionada')
     }

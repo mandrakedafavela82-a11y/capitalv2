@@ -55,7 +55,7 @@ export default function Team() {
 
   async function changeRole(id, role) {
     const { error } = await supabase.from('profiles').update({ role }).eq('id', id)
-    if (error) return toast.error('Erro ao alterar cargo')
+    if (error) { console.error('[DB]', error); return toast.error(error.message || 'Erro ao alterar cargo') }
     setMembers(prev => prev.map(m => m.id === id ? { ...m, role } : m))
     setEditModal(null)
     toast.success('Cargo atualizado')
